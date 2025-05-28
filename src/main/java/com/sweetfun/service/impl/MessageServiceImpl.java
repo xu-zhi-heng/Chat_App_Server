@@ -3,20 +3,36 @@ package com.sweetfun.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.sweetfun.domain.Friend;
 import com.sweetfun.domain.Message;
+import com.sweetfun.domain.vo.FriendListVo;
+import com.sweetfun.domain.vo.FriendMessageVo;
 import com.sweetfun.mapper.MessageMapper;
 import com.sweetfun.response.Result;
 import com.sweetfun.service.FriendService;
 import com.sweetfun.service.MessageService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> implements MessageService {
+
+    @Autowired
+    private MessageMapper messageMapper;
+
+    @Autowired
+    private FriendService friendService;
 
     @Override
     public List<Message> getMessageBetweenUsers(Long userId1, Long userId2, LocalDateTime time) {
@@ -34,9 +50,42 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
     }
 
     @Override
-    public Result<?> getMessageList(Long userId) {
-        return null;
+    public List<FriendMessageVo> getMessageList(Long userId) {
+        try {
+            List<FriendListVo> friendListVos = friendService.getFriendList(userId, (byte) 1);
+            if (CollectionUtils.isEmpty(friendListVos)) {
+                return Collections.emptyList();
+            }
+            // 提取所有好友ID
+            List<Long> friendIds = friendListVos.stream()
+                    .map(FriendListVo::getFriendId)
+                    .collect(Collectors.toList());
+            // 查询与这些好友的最近消息
+            List<Message> messages = messageMapper.getLastMessagesWithFriends(friendIds, userId);
+            // 将消息转为 Map<friendId, message>
+            Map<Long, Message> latestMsgMap = messages.stream()
+                    .collect(Collectors.toMap(
+                            msg -> msg.getSenderId().equals(userId) ? msg.getReceiverId() : msg.getSenderId(),
+                            msg -> msg
+                    ));
+            List<FriendMessageVo> resultList = friendListVos.stream()
+                    .map(vo -> {
+                        FriendMessageVo messageVo = new FriendMessageVo();
+                        BeanUtils.copyProperties(vo, messageVo);
+                        Message msg = latestMsgMap.get(vo.getFriendId());
+                        if (msg != null) {
+                            messageVo.setContent(msg.getContent());
+                            messageVo.setMsgType(msg.getMsgType());
+                            messageVo.setMsgCreateTime(msg.getCreateTime());
+                        }
+                        return messageVo;
+                    })
+                    .collect(Collectors.toList());
+            return resultList;
+        } catch (Exception exception) {
+            log.error("查询信息列表失败, {}", exception.getMessage());
+            return null;
+        }
     }
-
 
 }

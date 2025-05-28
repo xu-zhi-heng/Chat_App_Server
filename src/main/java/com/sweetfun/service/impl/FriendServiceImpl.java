@@ -3,13 +3,11 @@ package com.sweetfun.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sweetfun.domain.Friend;
-import com.sweetfun.domain.Message;
 import com.sweetfun.domain.User;
 import com.sweetfun.domain.vo.FriendListVo;
 import com.sweetfun.mapper.FriendMapper;
 import com.sweetfun.response.Result;
 import com.sweetfun.service.FriendService;
-import com.sweetfun.service.MessageService;
 import com.sweetfun.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -18,14 +16,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
 @Slf4j
 public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> implements FriendService {
-
-    @Autowired
-    private MessageService messageService;
 
     @Autowired
     private UserService userService;
@@ -109,27 +105,26 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     }
 
     @Override
-    public Result<?> getFriendList(Long userId, Byte status) {
+    public List<FriendListVo> getFriendList(Long userId, Byte status) {
         QueryWrapper<Friend> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId).eq("status", status);
         try {
             List<Friend> friendList = this.list(queryWrapper);
             if (friendList == null || friendList.isEmpty()) {
-                return Result.success(null, "好友列表为空");
+                return Collections.emptyList();
             }
             List<FriendListVo> friendListVos = new ArrayList<>();
             friendList.forEach(friend -> {
-                // 获取好友的用户信息
                 User friendInfo = userService.getById(friend.getFriendId());
                 FriendListVo friendListVo = new FriendListVo();
                 BeanUtils.copyProperties(friend, friendListVo, FriendListVo.class);
                 BeanUtils.copyProperties(friendInfo, friendListVo, "id");
                 friendListVos.add(friendListVo);
             });
-            return Result.success(friendListVos, "查询好友列表成功");
+            return friendListVos;
         } catch (Exception exception) {
             log.error("查询好友列表失败", exception);
-            return Result.error(500, "查询好友列表失败");
+            return null;
         }
     }
 

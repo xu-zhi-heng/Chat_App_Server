@@ -2,6 +2,7 @@ package com.sweetfun.controller;
 
 import com.sweetfun.annotation.RequireToken;
 import com.sweetfun.domain.Message;
+import com.sweetfun.domain.vo.FriendMessageVo;
 import com.sweetfun.response.Result;
 import com.sweetfun.service.MessageService;
 import com.sweetfun.utils.UserContext;
@@ -36,8 +37,11 @@ public class MessageController {
         if (userId == null) {
             return Result.error(400, "用户ID无效");
         }
-        return messageService.getMessageList(userId);
+        List<FriendMessageVo> messageList = messageService.getMessageList(userId);
+        if (messageList == null) {
+            return Result.error(500, "查询消息列表失败");
+        } else {
+            return Result.success(messageList, "查询消息列表成功");
+        }
     }
-
-
 }

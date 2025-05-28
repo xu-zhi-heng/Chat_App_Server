@@ -2,12 +2,15 @@ package com.sweetfun.controller;
 
 import com.sweetfun.annotation.RequireToken;
 import com.sweetfun.domain.Friend;
+import com.sweetfun.domain.vo.FriendListVo;
 import com.sweetfun.response.Result;
 import com.sweetfun.service.FriendService;
 import com.sweetfun.utils.UserContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/friend")
@@ -44,7 +47,12 @@ public class FriendController {
         if (userId == null) {
             return Result.error(400, "用户ID为空");
         }
-        return friendService.getFriendList(userId, status);
+        List<FriendListVo> friendList = friendService.getFriendList(userId, status);
+        if (friendList != null) {
+            return Result.success(friendList, "查询好友列表成功");
+        } else {
+            return Result.success(null, "查询好友列表失败");
+        }
     }
 
 }
