@@ -7,8 +7,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
 @MapperScan("com.sweetfun.mapper")
+@SpringBootApplication
 public class MiniChatServerApplication implements CommandLineRunner {
 
     @Autowired

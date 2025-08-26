@@ -43,7 +43,6 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
             log.error("查询好友关系失败", exception);
             return Result.error(500, "查询好友关系失败");
         }
-
         // 查询对方是否发送过好友请求
         QueryWrapper<Friend> reverseWrapper = new QueryWrapper<>();
         reverseWrapper.eq("user_id", friendId).eq("friend_id", userId);

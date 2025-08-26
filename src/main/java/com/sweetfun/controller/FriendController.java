@@ -1,10 +1,13 @@
 package com.sweetfun.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sweetfun.annotation.RequireToken;
-import com.sweetfun.domain.Friend;
+import com.sweetfun.domain.User;
 import com.sweetfun.domain.vo.FriendListVo;
 import com.sweetfun.response.Result;
 import com.sweetfun.service.FriendService;
+import com.sweetfun.service.UserService;
 import com.sweetfun.utils.UserContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,9 @@ public class FriendController {
 
     @Autowired
     private FriendService friendService;
+
+    @Autowired
+    private UserService userService;
 
     @PostMapping("/addFriend")
     @RequireToken
@@ -53,6 +59,18 @@ public class FriendController {
         } else {
             return Result.success(null, "查询好友列表失败");
         }
+    }
+
+
+    @GetMapping("/getFriendInfo")
+    @RequireToken
+    public Result<?> getFriendInfo(@RequestParam Long friendId) {
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.select(User.class, tableFieldInfo ->
+                !tableFieldInfo.getColumn().equals("password")
+        );
+        User user = userService.getById(friendId);
+        return Result.success(user);
     }
 
 }

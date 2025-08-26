@@ -3,29 +3,28 @@ package com.sweetfun.domain;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.sweetfun.config.MsgTypeDeserializer;
-import com.sweetfun.emun.MsgType;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
-
 import java.time.LocalDateTime;
 
-@TableName("message")
 @Data
-public class Message {
+@TableName("chat_list")
+public class ChatList {
     @JsonSerialize(using = ToStringSerializer.class)
     @TableId
     private Long id;
-    private Long senderId;
-    private Long receiverId;
-    private String content;
-    @JsonDeserialize(using = MsgTypeDeserializer.class)
-    private MsgType msgType;
-    private Integer status;
+    private Long userId;
+    private Long friendId;
+    private Long lastMessageId;
+    private Integer isPinned;
+    private Integer isDeleted;
+    private Long unreadCount;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime updateTime;
 }

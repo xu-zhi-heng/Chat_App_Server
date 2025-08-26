@@ -1,10 +1,10 @@
 package com.sweetfun.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.sweetfun.domain.User;
+import com.sweetfun.domain.ChatList;
 import org.apache.ibatis.annotations.Mapper;
-import org.springframework.stereotype.Repository;
 
 @Mapper
-public interface UserMapper extends BaseMapper<User> {
+public interface ChatListMapper extends BaseMapper<ChatList> {
+
 }

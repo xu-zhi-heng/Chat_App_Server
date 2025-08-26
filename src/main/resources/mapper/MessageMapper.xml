@@ -1,26 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sweetfun.mapper.MessageMapper">
-
     <select id="getLastMessagesWithFriends" resultType="com.sweetfun.domain.Message">
-        select t.*
-        from (
-            select * from message
-            where (
-                sender_id = #{userId} and receiver_id in
-                <foreach collection="friendIds" item="fid" open="(" close=")" separator=",">
-                    #{fid}
-                </foreach>
-                or
-                (receiver_id = #{userId} and sender_id in)
-                <foreach collection="friendIds" item="fid" open="(" close=")" separator=",">
-                    #{fid}
-                </foreach>
-                order by create_time desc
-            ) t
-            <!--LEAST 和 GREATEST 用来归一化双方身份（A发B 和 B发A 归为同一对）-->
-            group by LEAST(t.sender_id, t.receiver_id),  GREATEST(t.sender_id, t.receiver_id)
-        )
+        SELECT t.*
+        FROM (
+            SELECT *
+            FROM message
+            WHERE (
+                (
+                    sender_id = #{userId} AND receiver_id IN
+                    <foreach collection="friendIds" item="fid" open="(" separator="," close=")">
+                        #{fid}
+                    </foreach>
+                )
+            OR
+                (
+                    receiver_id = #{userId} AND sender_id IN
+                    <foreach collection="friendIds" item="fid" open="(" separator="," close=")">
+                        #{fid}
+                    </foreach>
+                )
+            )
+            ORDER BY create_time DESC
+        ) t
+        GROUP BY LEAST(t.sender_id, t.receiver_id), GREATEST(t.sender_id, t.receiver_id)
     </select>
-
 </mapper>

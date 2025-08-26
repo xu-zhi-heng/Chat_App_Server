@@ -13,7 +13,18 @@ public class UserChannelManager {
     private final Map<String, Channel> userChannelMap = new ConcurrentHashMap<>();
 
     public void register(String userId, Channel channel) {
-        userChannelMap.put(userId, channel);
+//        if (!userChannelMap.containsKey(userId)) {
+//            userChannelMap.put(userId, channel);
+//        }
+
+        if (!userChannelMap.containsKey(userId)) {
+            userChannelMap.put(userId, channel);
+        } else {
+            if (!userChannelMap.get(userId).isActive()) {
+                userChannelMap.remove(userId);
+                userChannelMap.put(userId, channel);
+            }
+        }
     }
 
     public void remove(String userId) {

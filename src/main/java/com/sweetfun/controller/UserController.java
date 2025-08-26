@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @RestController
@@ -31,7 +31,11 @@ public class UserController {
         String ip = request.getRemoteAddr();
         try {
             String token = userService.login(username, password, ip);
-            return Result.success(token, "登录成功");
+            if (token == null) {
+                return Result.error(500, "账号或密码错误");
+            } else {
+                return Result.success(token, "登录成功");
+            }
         } catch (RuntimeException e) {
             return Result.error(HttpStatus.UNAUTHORIZED.value(), e.getMessage());
         }

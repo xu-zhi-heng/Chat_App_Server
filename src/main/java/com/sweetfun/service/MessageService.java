@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface MessageService extends IService<Message> {
-    List<Message> getMessageBetweenUsers(Long userId1, Long userId2, LocalDateTime time);
+    List<Message> getMessageBetweenUsers(Long userId1, Long userId2, LocalDateTime time, boolean isAll);
     List<FriendMessageVo> getMessageList(Long userId);
+    boolean updateMessage(List<Message> messages);
 }

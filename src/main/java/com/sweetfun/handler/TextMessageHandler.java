@@ -14,8 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
 @Component
 @Slf4j
 public class TextMessageHandler implements WebSocketFrameHandler{
@@ -25,6 +23,9 @@ public class TextMessageHandler implements WebSocketFrameHandler{
 
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private ChatListHandler chatListHandler;
 
     @Autowired
     public TextMessageHandler(ObjectMapper objectMapper, UserChannelManager userChannelManager) {
@@ -39,22 +40,25 @@ public class TextMessageHandler implements WebSocketFrameHandler{
 
     @Override
     public void handle(ChannelHandlerContext ctx, WebSocketFrame webSocketFrame) {
-        // todo 后期的消息会先放入MQ，然后异步的存入到mysql中
+        // todo 后期的消息会先放入MQ，然后异步的存入到mysql中, 还有ACK确定机制
         String msg = ((TextWebSocketFrame) webSocketFrame).text();
         try {
             Message message = objectMapper.readValue(msg, Message.class);
-            message.setStatus(1);
-            message.setCreateTime(LocalDateTime.now().withNano(0));
+            message.setStatus(0);
             messageService.save(message);
+            // 检查消息列表
+            chatListHandler.ensureChatListEntry(message.getSenderId(), message.getReceiverId(), message.getId());
             Long receiverId = message.getReceiverId();
             Channel channel = userChannelManager.getChannel(receiverId.toString());
+            log.info("获取到channel为: {}", channel);
             if (channel == null) {
                 log.info("{}用户不在线", receiverId);
                 // 设置消息为未读状态
                 message.setStatus(0);
                 messageService.updateById(message);
             } else {
-                channel.writeAndFlush(new TextWebSocketFrame(message.getContent()));
+                log.info("channel是否活跃: {}", channel.isActive());
+                channel.writeAndFlush(new TextWebSocketFrame(objectMapper.writeValueAsString(message)));
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();

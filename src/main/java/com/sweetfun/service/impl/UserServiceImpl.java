@@ -30,7 +30,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         try {
             User user = this.getOne(wrapper);
             if (user == null || !passwordEncoder.matches(rawPassword, user.getPassword())) {
-                log.error("{}, 密码错误", username);
+                log.error("{}, 验证失败", username);
                 throw new RuntimeException("用户名或密码错误");
             }
             user.setLoginIp(ip);
@@ -40,8 +40,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return jwtUtils.generateToken(user.getId(), user.getUsername());
         } catch (Exception exception) {
             log.error(exception.getMessage());
+            return null;
         }
-        return null;
     }
 
     @Override

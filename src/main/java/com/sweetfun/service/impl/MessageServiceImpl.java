@@ -7,18 +7,15 @@ import com.sweetfun.domain.Message;
 import com.sweetfun.domain.vo.FriendListVo;
 import com.sweetfun.domain.vo.FriendMessageVo;
 import com.sweetfun.mapper.MessageMapper;
-import com.sweetfun.response.Result;
 import com.sweetfun.service.FriendService;
 import com.sweetfun.service.MessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +32,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
     private FriendService friendService;
 
     @Override
-    public List<Message> getMessageBetweenUsers(Long userId1, Long userId2, LocalDateTime time) {
+    public List<Message> getMessageBetweenUsers(Long userId1, Long userId2, LocalDateTime time, boolean isAll) {
         QueryWrapper<Message> wrapper = new QueryWrapper<>();
         // 构造 ((userId1 = A and userId2 = B) or (userId1 = B and userId2 = A))
         wrapper.nested(w -> {
@@ -43,10 +40,24 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
                     .eq("sender_id", userId2).eq("receiver_id", userId1);
         });
         // 时间小于指定时间
-        wrapper.lt("create_time", time);
-        // 按时间倒序, limit 20
-        wrapper.orderByDesc("create_time").last("limit 20");
-        return this.list(wrapper);
+        if (time != null) {
+            wrapper.lt("create_time", time);
+        }
+        if (!isAll) {
+            // 按时间升序, limit 20
+            wrapper.orderByAsc("create_time").last("limit 20");
+        }
+        try {
+            List<Message> messages = this.list(wrapper);
+            if (messages.isEmpty()) {
+                return Collections.emptyList();
+            } else {
+                return messages;
+            }
+        } catch (Exception exception) {
+            log.error("查询用户对话信息失败: {}", exception.getMessage());
+            return null;
+        }
     }
 
     @Override
@@ -62,6 +73,10 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
                     .collect(Collectors.toList());
             // 查询与这些好友的最近消息
             List<Message> messages = messageMapper.getLastMessagesWithFriends(friendIds, userId);
+            log.info("messages: {}", messages);
+            if (CollectionUtils.isEmpty(messages)) {
+                return Collections.emptyList();
+            }
             // 将消息转为 Map<friendId, message>
             Map<Long, Message> latestMsgMap = messages.stream()
                     .collect(Collectors.toMap(
@@ -88,4 +103,14 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
         }
     }
 
+    @Override
+    public boolean updateMessage(List<Message> messages) {
+        try {
+            messages.removeIf(message -> message.getId() == null);
+            return this.updateBatchById(messages);
+        } catch (Exception exception) {
+            log.error("更新消息失败, {}", exception.getMessage());
+            return false;
+        }
+    }
 }
