@@ -35,7 +35,7 @@ public class WebSocketChannelInitializer extends ChannelInitializer<SocketChanne
 //        pipeline.addLast(new IdleStateHandler(30, 0, 0, TimeUnit.SECONDS));
 //        pipeline.addLast(new HeartBeatHandler()); // 自定义 handler 处理心跳超时
         // 先进行注册在进行聊天消息发送
-        pipeline.addLast(authHandler);
+//        pipeline.addLast(authHandler);
         pipeline.addLast(chatHandler);
     }
 }

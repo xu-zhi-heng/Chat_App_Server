@@ -44,14 +44,15 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
             wrapper.lt("create_time", time);
         }
         if (!isAll) {
-            // 按时间升序, limit 20
-            wrapper.orderByAsc("create_time").last("limit 20");
+            // 取最新的前20条消息
+            wrapper.orderByDesc("create_time").last("limit 20");
         }
         try {
             List<Message> messages = this.list(wrapper);
             if (messages.isEmpty()) {
                 return Collections.emptyList();
             } else {
+                Collections.reverse(messages);
                 return messages;
             }
         } catch (Exception exception) {

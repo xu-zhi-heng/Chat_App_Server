@@ -6,6 +6,7 @@ import com.sweetfun.domain.ChatList;
 import com.sweetfun.domain.Message;
 import com.sweetfun.domain.User;
 import com.sweetfun.domain.vo.ChatListSelectVo;
+import com.sweetfun.emun.MsgType;
 import com.sweetfun.mapper.ChatListMapper;
 import com.sweetfun.service.ChatListService;
 import com.sweetfun.service.MessageService;
@@ -49,8 +50,18 @@ public class ChatListServiceImpl extends ServiceImpl<ChatListMapper, ChatList> i
                         vo.setNickName(friend.getNickname());
                         if (chatList.getLastMessageId() != null) {
                             Message message = messageService.getById(chatList.getLastMessageId());
-                            vo.setContent(message.getContent());
-                            vo.setLastMessageTime(message.getCreateTime());
+                            if (message != null) {
+                                if (message.getMsgType() == null) {
+                                    vo.setContent(MsgType.UNKNOWN.getDesc());
+                                } else {
+                                    switch (message.getMsgType()) {
+                                        case TEXT -> vo.setContent(message.getContent());
+                                        case IMAGE, VIDEO, VOICE, REFERENCE -> vo.setContent(message.getMsgType().getDesc());
+                                        default -> vo.setContent(MsgType.UNKNOWN.getDesc());
+                                    }
+                                }
+                                vo.setLastMessageTime(message.getCreateTime());
+                            }
                         }
                         return vo;
                     })
